@@ -1,0 +1,15 @@
+[server]
+# Enable file uploads
+maxUploadSize = 200
+
+[theme]
+# Clean, professional theme
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
+
+[browser]
+# Disable automatic browser opening (for cloud deployment)
+gatherUsageStats = false
