@@ -407,6 +407,127 @@ def extract_text(file_name: str, file_bytes: bytes) -> Tuple[str, str]:
 	except Exception:
 		raise ValueError("Unsupported file type. Please upload PDF, DOCX, or TXT.")
 
+def process_resume(raw_text: str, lang: str, enable_ai: bool, enable_grammar: bool, job_title: str):
+    """Process resume with all selected enhancements."""
+    
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    # Step 1: Basic cleaning
+    status_text.text("🧹 Basic cleaning and formatting...")
+    progress_bar.progress(20)
+    cleaned = clean_text_preserving_layout(raw_text)
+    
+    # Step 2: AI enhancement
+    if enable_ai:
+        status_text.text("🤖 AI content enhancement...")
+        progress_bar.progress(40)
+        cleaned = enhance_content_with_ai(cleaned)
+    
+    # Step 3: Grammar check
+    if enable_grammar:
+        status_text.text("📝 Advanced grammar checking...")
+        progress_bar.progress(60)
+        # Apply grammar check to cleaned text
+        cleaned, _ = apply_languagetool(cleaned, language=lang)
+    
+    # Step 4: Final formatting
+    status_text.text("✨ Final formatting and optimization...")
+    progress_bar.progress(80)
+    
+    # Step 5: Complete
+    status_text.text("✅ Processing complete!")
+    progress_bar.progress(100)
+    
+    # Display results
+    st.subheader("🎉 Enhanced Resume")
+    
+    # Side-by-side comparison
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Before**")
+        st.text_area("Original", raw_text, height=300, key="original")
+    
+    with col2:
+        st.markdown("**After**")
+        st.text_area("Enhanced", cleaned, height=300, key="enhanced")
+    
+    # Download options
+    st.subheader("📥 Download Options")
+    
+    # Prepare downloads
+    cleaned_txt = cleaned.encode("utf-8")
+    try:
+        cleaned_docx = write_docx_from_text(cleaned)
+    except Exception as e:
+        cleaned_docx = None
+        st.info(f"DOCX generation note: {e}")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.download_button(
+            label="📄 Download as TXT",
+            data=cleaned_txt,
+            file_name="enhanced_resume.txt",
+            mime="text/plain",
+        )
+    with col2:
+        if cleaned_docx:
+            st.download_button(
+                label="📝 Download as DOCX",
+                data=cleaned_docx,
+                file_name="enhanced_resume.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+    with col3:
+        # Generate PDF (placeholder)
+        st.download_button(
+            label="📋 Download as PDF",
+            data=cleaned_txt,  # Placeholder
+            file_name="enhanced_resume.pdf",
+            mime="application/pdf",
+            disabled=True,
+            help="PDF generation coming soon!"
+        )
+
+def generate_template(template_name: str, raw_text: str):
+    """Generate resume template based on selected style."""
+    template = RESUME_TEMPLATES[template_name]
+    
+    st.subheader(f"📋 {template_name} Template")
+    st.info(f"Template style: {template['style']}")
+    
+    # Show template structure
+    st.markdown("**Template Sections:**")
+    for i, section in enumerate(template["sections"], 1):
+        st.markdown(f"{i}. {section}")
+    
+    # Generate template content
+    template_content = f"# {template_name} Resume Template\n\n"
+    for section in template["sections"]:
+        template_content += f"## {section}\n\n"
+        if section == "Contact":
+            template_content += "Name: [Your Name]\nEmail: [your.email@example.com]\nPhone: [Your Phone]\nLinkedIn: [Your LinkedIn]\n\n"
+        elif section == "Summary":
+            template_content += "Professional summary highlighting your key achievements and career objectives.\n\n"
+        elif section == "Experience":
+            template_content += "### [Job Title] - [Company Name]\n[Start Date] - [End Date]\n- [Achievement 1]\n- [Achievement 2]\n- [Achievement 3]\n\n"
+        elif section == "Education":
+            template_content += "### [Degree] - [University Name]\n[Start Date] - [End Date]\nGPA: [Your GPA]\n\n"
+        elif section == "Skills":
+            template_content += "- [Technical Skill 1]\n- [Technical Skill 2]\n- [Soft Skill 1]\n- [Soft Skill 2]\n\n"
+    
+    st.text_area("Template Content", template_content, height=400)
+    
+    # Download template
+    template_bytes = template_content.encode("utf-8")
+    st.download_button(
+        label="📥 Download Template",
+        data=template_bytes,
+        file_name=f"{template_name.lower()}_resume_template.txt",
+        mime="text/plain",
+    )
+
 
 # -------- Advanced UI --------
 st.title("🧹 AI Resume Cleaner Pro")
@@ -548,127 +669,6 @@ else:
     st.info("📁 Choose a PDF, DOCX, or TXT file to get started.")
     st.caption("💡 **Pro Tips**: Use the sidebar to customize language, job role, and enhancement options for better results.")
 
-# Function definitions
-def process_resume(raw_text: str, lang: str, enable_ai: bool, enable_grammar: bool, job_title: str):
-    """Process resume with all selected enhancements."""
-    
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    
-    # Step 1: Basic cleaning
-    status_text.text("🧹 Basic cleaning and formatting...")
-    progress_bar.progress(20)
-    cleaned = clean_text_preserving_layout(raw_text)
-    
-    # Step 2: AI enhancement
-    if enable_ai:
-        status_text.text("🤖 AI content enhancement...")
-        progress_bar.progress(40)
-        cleaned = enhance_content_with_ai(cleaned)
-    
-    # Step 3: Grammar check
-    if enable_grammar:
-        status_text.text("📝 Advanced grammar checking...")
-        progress_bar.progress(60)
-        # Apply grammar check to cleaned text
-        cleaned, _ = apply_languagetool(cleaned, language=lang)
-    
-    # Step 4: Final formatting
-    status_text.text("✨ Final formatting and optimization...")
-    progress_bar.progress(80)
-    
-    # Step 5: Complete
-    status_text.text("✅ Processing complete!")
-    progress_bar.progress(100)
-    
-    # Display results
-    st.subheader("🎉 Enhanced Resume")
-    
-    # Side-by-side comparison
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**Before**")
-        st.text_area("Original", raw_text, height=300, key="original")
-    
-    with col2:
-        st.markdown("**After**")
-        st.text_area("Enhanced", cleaned, height=300, key="enhanced")
-    
-    # Download options
-    st.subheader("📥 Download Options")
-    
-    # Prepare downloads
-    cleaned_txt = cleaned.encode("utf-8")
-    try:
-        cleaned_docx = write_docx_from_text(cleaned)
-    except Exception as e:
-        cleaned_docx = None
-        st.info(f"DOCX generation note: {e}")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.download_button(
-            label="📄 Download as TXT",
-            data=cleaned_txt,
-            file_name="enhanced_resume.txt",
-            mime="text/plain",
-        )
-    with col2:
-        if cleaned_docx:
-            st.download_button(
-                label="📝 Download as DOCX",
-                data=cleaned_docx,
-                file_name="enhanced_resume.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
-    with col3:
-        # Generate PDF (placeholder)
-        st.download_button(
-            label="📋 Download as PDF",
-            data=cleaned_txt,  # Placeholder
-            file_name="enhanced_resume.pdf",
-            mime="application/pdf",
-            disabled=True,
-            help="PDF generation coming soon!"
-        )
-
-def generate_template(template_name: str, raw_text: str):
-    """Generate resume template based on selected style."""
-    template = RESUME_TEMPLATES[template_name]
-    
-    st.subheader(f"📋 {template_name} Template")
-    st.info(f"Template style: {template['style']}")
-    
-    # Show template structure
-    st.markdown("**Template Sections:**")
-    for i, section in enumerate(template["sections"], 1):
-        st.markdown(f"{i}. {section}")
-    
-    # Generate template content
-    template_content = f"# {template_name} Resume Template\n\n"
-    for section in template["sections"]:
-        template_content += f"## {section}\n\n"
-        if section == "Contact":
-            template_content += "Name: [Your Name]\nEmail: [your.email@example.com]\nPhone: [Your Phone]\nLinkedIn: [Your LinkedIn]\n\n"
-        elif section == "Summary":
-            template_content += "Professional summary highlighting your key achievements and career objectives.\n\n"
-        elif section == "Experience":
-            template_content += "### [Job Title] - [Company Name]\n[Start Date] - [End Date]\n- [Achievement 1]\n- [Achievement 2]\n- [Achievement 3]\n\n"
-        elif section == "Education":
-            template_content += "### [Degree] - [University Name]\n[Start Date] - [End Date]\nGPA: [Your GPA]\n\n"
-        elif section == "Skills":
-            template_content += "- [Technical Skill 1]\n- [Technical Skill 2]\n- [Soft Skill 1]\n- [Soft Skill 2]\n\n"
-    
-    st.text_area("Template Content", template_content, height=400)
-    
-    # Download template
-    template_bytes = template_content.encode("utf-8")
-    st.download_button(
-        label="📥 Download Template",
-        data=template_bytes,
-        file_name=f"{template_name.lower()}_resume_template.txt",
-        mime="text/plain",
-    )
 
 
 # Footer
