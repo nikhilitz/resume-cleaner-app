@@ -848,7 +848,7 @@ with st.sidebar:
         if processing_mode == "Custom":
             custom_enhancements = st.multiselect(
                 "Custom Enhancements",
-                ["Action Verbs", "Quantifiers", "Keywords", "Formatting", "Bullet Points"]
+                ["Action Verbs", "Quantifiers", "Keywords", "Formatting"]
             )
 
 # Main content area
@@ -901,14 +901,12 @@ if uploaded is not None:
     if enable_structure_analysis:
         st.subheader("📊 Resume Analysis")
         
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Word Count", analysis["word_count"])
         with col2:
             st.metric("Sections Found", len(analysis["sections"]))
         with col3:
-            st.metric("Bullet Points", analysis["bullet_points"])
-        with col4:
             st.metric("Action Verbs", analysis["action_verbs"])
 
         # Comprehensive Score
