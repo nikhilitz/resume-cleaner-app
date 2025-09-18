@@ -115,46 +115,70 @@ def apply_languagetool(text: str, api_url: str = "https://api.languagetool.org/v
 
 
 def clean_text_preserving_layout(raw_text: str) -> str:
-	"""
-	Clean grammar/punctuation while preserving layout and bullets.
-	Strategy:
-	- Normalize bullets
-	- Split into paragraphs (single text or bullet blocks)
-	- Send each paragraph to LanguageTool to avoid position drift across blocks
-	- Rebuild with blank lines between paragraphs
-	"""
-	if not raw_text.strip():
-		return raw_text
+    """
+    Clean grammar/punctuation while preserving layout and bullets.
+    Strategy:
+    - Remove PDF artifacts and formatting issues
+    - Normalize bullets and spacing
+    - Split into paragraphs (single text or bullet blocks)
+    - Send each paragraph to LanguageTool to avoid position drift across blocks
+    - Rebuild with blank lines between paragraphs
+    """
+    if not raw_text.strip():
+        return raw_text
 
-	lines = raw_text.replace("\t", "    ").split("\n")
-	lines = normalize_bullets(lines)
-	normalized_text = "\n".join(lines)
+    # Remove PDF artifacts and common formatting issues
+    cleaned = raw_text
+    # Remove PDF character IDs like (cid:132)
+    cleaned = re.sub(r'\(cid:\d+\)', '', cleaned)
+    # Fix common spacing issues
+    cleaned = re.sub(r'([a-z])([A-Z])', r'\1 \2', cleaned)  # Add space between camelCase
+    cleaned = re.sub(r'([a-z])(\d)', r'\1 \2', cleaned)  # Add space between letter and number
+    cleaned = re.sub(r'(\d)([A-Z])', r'\1 \2', cleaned)  # Add space between number and letter
+    # Fix common grammar issues
+    cleaned = re.sub(r'\b([a-z]+)are\b', r'\1 are', cleaned)  # Fix "Developedareal" -> "Developed a real"
+    cleaned = re.sub(r'\b([a-z]+)an\b', r'\1 an', cleaned)  # Fix "Deployedan" -> "Deployed an"
+    cleaned = re.sub(r'\b([a-z]+)with\b', r'\1 with', cleaned)  # Fix "Integratedwith" -> "Integrated with"
+    cleaned = re.sub(r'\b([a-z]+)for\b', r'\1 for', cleaned)  # Fix "Designedfor" -> "Designed for"
+    cleaned = re.sub(r'\b([a-z]+)to\b', r'\1 to', cleaned)  # Fix "Implementedto" -> "Implemented to"
+    cleaned = re.sub(r'\b([a-z]+)in\b', r'\1 in', cleaned)  # Fix "Specializedin" -> "Specialized in"
+    # Fix common punctuation issues
+    cleaned = re.sub(r'([a-z])([A-Z][a-z])', r'\1. \2', cleaned)  # Add period before new sentences
+    cleaned = re.sub(r'([.!?])([A-Z])', r'\1 \2', cleaned)  # Ensure space after punctuation
+    # Clean up multiple spaces
+    cleaned = re.sub(r' +', ' ', cleaned)
+    # Clean up multiple newlines
+    cleaned = re.sub(r'\n+', '\n', cleaned)
 
-	paragraphs = split_into_paragraphs(normalized_text)
+    lines = cleaned.replace("\t", "    ").split("\n")
+    lines = normalize_bullets(lines)
+    normalized_text = "\n".join(lines)
 
-	cleaned_paragraphs: List[str] = []
-	for para in paragraphs:
-		# Keep bullet structure line-by-line
-		if any(BULLET_PATTERN.match(ln) for ln in para.split("\n")):
-			cleaned_lines = []
-			for ln in para.split("\n"):
-				if BULLET_PATTERN.match(ln):
-					# Clean only the text after the bullet
-					bullet_body = BULLET_PATTERN.sub("", ln, count=1)
-					fixed, _ = apply_languagetool(bullet_body)
-					cleaned_lines.append("- " + fixed.strip())
-				else:
-					fixed, _ = apply_languagetool(ln)
-					cleaned_lines.append(fixed)
-			cleaned_paragraphs.append("\n".join(cleaned_lines))
-		else:
-			fixed, _ = apply_languagetool(para)
-			cleaned_paragraphs.append(fixed)
+    paragraphs = split_into_paragraphs(normalized_text)
 
-	cleaned_text = ("\n\n").join(p.strip() for p in cleaned_paragraphs if p is not None)
-	# Collapse excessive blank lines
-	cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text)
-	return cleaned_text.strip()
+    cleaned_paragraphs: List[str] = []
+    for para in paragraphs:
+        # Keep bullet structure line-by-line
+        if any(BULLET_PATTERN.match(ln) for ln in para.split("\n")):
+            cleaned_lines = []
+            for ln in para.split("\n"):
+                if BULLET_PATTERN.match(ln):
+                    # Clean only the text after the bullet
+                    bullet_body = BULLET_PATTERN.sub("", ln, count=1)
+                    fixed, _ = apply_languagetool(bullet_body)
+                    cleaned_lines.append("- " + fixed.strip())
+                else:
+                    fixed, _ = apply_languagetool(ln)
+                    cleaned_lines.append(fixed)
+            cleaned_paragraphs.append("\n".join(cleaned_lines))
+        else:
+            fixed, _ = apply_languagetool(para)
+            cleaned_paragraphs.append(fixed)
+
+    cleaned_text = ("\n\n").join(p.strip() for p in cleaned_paragraphs if p is not None)
+    # Collapse excessive blank lines
+    cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text)
+    return cleaned_text.strip()
 
 
 def read_txt(file_bytes: bytes, encoding_fallbacks: List[str] = ["utf-8", "utf-16", "latin-1"]) -> str:
