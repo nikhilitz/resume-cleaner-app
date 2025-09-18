@@ -1,6 +1,12 @@
 # AI Resume Cleaner 🧹
 
+[![Live App](https://img.shields.io/badge/🚀_Live_App-Streamlit-blue?style=for-the-badge&logo=streamlit)](https://resume-cleaner-app-exupajpkpz8p9bhb5dbmos.streamlit.app)
+
 A simple web app that cleans up your resume by fixing grammar, punctuation, and formatting issues while preserving the original content and meaning.
+
+## 🌐 Live Demo
+
+**Try it now**: [https://resume-cleaner-app-exupajpkpz8p9bhb5dbmos.streamlit.app](https://resume-cleaner-app-exupajpkpz8p9bhb5dbmos.streamlit.app)
 
 ## Features
 
