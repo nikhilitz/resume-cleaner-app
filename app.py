@@ -56,11 +56,31 @@ RESUME_TEMPLATES = {
 }
 
 ATS_KEYWORDS = {
-    "software_engineer": ["python", "java", "javascript", "react", "node.js", "sql", "git", "agile", "scrum"],
-    "data_scientist": ["python", "r", "machine learning", "pandas", "numpy", "scikit-learn", "tensorflow", "pytorch"],
-    "product_manager": ["product strategy", "user research", "agile", "scrum", "analytics", "roadmap", "stakeholder"],
-    "marketing": ["digital marketing", "seo", "social media", "analytics", "campaign", "brand", "content"],
-    "designer": ["ui/ux", "figma", "adobe", "prototyping", "user research", "design system", "wireframing"]
+    "software_engineer": [
+        "python", "java", "javascript", "react", "node.js", "sql", "git", "agile", "scrum",
+        "microservices", "api development", "cloud computing", "devops", "docker", "kubernetes",
+        "database design", "restful", "aws", "azure", "ci/cd", "test driven development"
+    ],
+    "data_scientist": [
+        "python", "r", "machine learning", "pandas", "numpy", "scikit-learn", "tensorflow", "pytorch",
+        "artificial intelligence", "data analysis", "statistical modeling", "deep learning", "nlp",
+        "computer vision", "data visualization", "sql", "spark", "hadoop", "jupyter", "tableau"
+    ],
+    "product_manager": [
+        "product strategy", "user research", "agile", "scrum", "analytics", "roadmap", "stakeholder",
+        "project management", "team leadership", "user experience", "market research", "competitive analysis",
+        "product lifecycle", "kpi", "metrics", "cross-functional", "wireframing", "prototyping"
+    ],
+    "marketing": [
+        "digital marketing", "seo", "social media", "analytics", "campaign", "brand", "content",
+        "email marketing", "ppc", "google ads", "facebook ads", "content marketing", "influencer marketing",
+        "marketing automation", "crm", "lead generation", "conversion optimization", "ab testing"
+    ],
+    "designer": [
+        "ui/ux", "figma", "adobe", "prototyping", "user research", "design system", "wireframing",
+        "user experience", "user interface", "interaction design", "visual design", "sketch", "invision",
+        "responsive design", "accessibility", "usability testing", "design thinking", "mobile design"
+    ]
 }
 
 # -------- Advanced Utilities --------
@@ -191,6 +211,87 @@ def calculate_ats_score(text: str, job_title: str = "software_engineer") -> Dict
         "missing_keywords": missing_keywords,
         "total_keywords": len(target_keywords),
         "matched_count": len(found_keywords)
+    }
+
+def calculate_comprehensive_score(text: str, job_title: str = "software_engineer") -> Dict[str, Any]:
+    """
+    Calculate comprehensive resume score with detailed feedback.
+    """
+    analysis = analyze_resume_structure(text)
+    ats_analysis = calculate_ats_score(text, job_title)
+    
+    # Calculate individual scores (0-100)
+    scores = {}
+    
+    # ATS Score (40% weight)
+    scores["ats"] = ats_analysis["score"]
+    
+    # Structure Score (25% weight)
+    structure_score = 0
+    if analysis["has_contact"]: structure_score += 20
+    if analysis["has_experience"]: structure_score += 30
+    if analysis["has_education"]: structure_score += 20
+    if analysis["has_skills"]: structure_score += 15
+    if len(analysis["sections"]) >= 5: structure_score += 15
+    scores["structure"] = min(structure_score, 100)
+    
+    # Content Quality Score (20% weight)
+    content_score = 0
+    if analysis["action_verbs"] >= 5: content_score += 30
+    if analysis["quantified_achievements"] >= 3: content_score += 30
+    if analysis["bullet_points"] >= 8: content_score += 20
+    if analysis["word_count"] >= 200 and analysis["word_count"] <= 800: content_score += 20
+    scores["content"] = min(content_score, 100)
+    
+    # Readability Score (15% weight)
+    readability_score = 100
+    if analysis["word_count"] < 150: readability_score -= 30
+    if analysis["word_count"] > 1000: readability_score -= 20
+    if analysis["bullet_points"] < 5: readability_score -= 25
+    if analysis["action_verbs"] < 3: readability_score -= 25
+    scores["readability"] = max(readability_score, 0)
+    
+    # Calculate overall score
+    overall_score = (
+        scores["ats"] * 0.4 +
+        scores["structure"] * 0.25 +
+        scores["content"] * 0.2 +
+        scores["readability"] * 0.15
+    )
+    
+    # Generate feedback
+    feedback = []
+    
+    if scores["ats"] < 60:
+        feedback.append("🎯 Add more job-specific keywords to improve ATS compatibility")
+    if scores["structure"] < 70:
+        feedback.append("📋 Ensure all major sections (Contact, Experience, Education, Skills) are present")
+    if scores["content"] < 70:
+        feedback.append("📝 Add more action verbs and quantified achievements")
+    if scores["readability"] < 70:
+        feedback.append("📖 Improve readability with better formatting and bullet points")
+    
+    if overall_score >= 80:
+        grade = "A"
+        grade_color = "green"
+    elif overall_score >= 70:
+        grade = "B"
+        grade_color = "blue"
+    elif overall_score >= 60:
+        grade = "C"
+        grade_color = "orange"
+    else:
+        grade = "D"
+        grade_color = "red"
+    
+    return {
+        "overall_score": round(overall_score, 1),
+        "grade": grade,
+        "grade_color": grade_color,
+        "scores": scores,
+        "feedback": feedback,
+        "analysis": analysis,
+        "ats_analysis": ats_analysis
     }
 
 def enhance_content_with_ai(text: str) -> str:
@@ -608,6 +709,7 @@ if uploaded is not None:
         with st.spinner("📊 Analyzing resume structure..."):
             analysis = analyze_resume_structure(raw_text)
             ats_analysis = calculate_ats_score(raw_text, job_title)
+            comprehensive_score = calculate_comprehensive_score(raw_text, job_title)
 
     # Display analysis results
     if enable_structure_analysis:
@@ -623,31 +725,53 @@ if uploaded is not None:
         with col4:
             st.metric("Action Verbs", analysis["action_verbs"])
 
-        # ATS Score
+        # Comprehensive Score
+        st.subheader("🎯 Comprehensive Resume Score")
+        
+        # Overall score with grade
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col1:
+            st.markdown(f"### <span style='color: {comprehensive_score['grade_color']}'>{comprehensive_score['grade']}</span>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"### <span style='color: {comprehensive_score['grade_color']}'>{comprehensive_score['overall_score']}%</span>", unsafe_allow_html=True)
+            st.progress(comprehensive_score['overall_score'] / 100)
+        with col3:
+            st.markdown("### Overall Score")
+        
+        # Detailed scores
+        st.subheader("📈 Detailed Scoring")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("ATS Score", f"{comprehensive_score['scores']['ats']}%", 
+                     delta=f"{comprehensive_score['scores']['ats'] - 60}%" if comprehensive_score['scores']['ats'] > 60 else None)
+        with col2:
+            st.metric("Structure", f"{comprehensive_score['scores']['structure']}%",
+                     delta=f"{comprehensive_score['scores']['structure'] - 70}%" if comprehensive_score['scores']['structure'] > 70 else None)
+        with col3:
+            st.metric("Content Quality", f"{comprehensive_score['scores']['content']}%",
+                     delta=f"{comprehensive_score['scores']['content'] - 70}%" if comprehensive_score['scores']['content'] > 70 else None)
+        with col4:
+            st.metric("Readability", f"{comprehensive_score['scores']['readability']}%",
+                     delta=f"{comprehensive_score['scores']['readability'] - 70}%" if comprehensive_score['scores']['readability'] > 70 else None)
+
+        # Feedback section
+        if comprehensive_score['feedback']:
+            st.subheader("💡 Improvement Suggestions")
+            for suggestion in comprehensive_score['feedback']:
+                st.info(suggestion)
+
+        # ATS Keywords analysis
         if enable_ats_optimization:
-            st.subheader("🎯 ATS Compatibility Score")
-            ats_score = ats_analysis["score"]
-            
-            # Color-coded score
-            if ats_score >= 80:
-                score_color = "green"
-            elif ats_score >= 60:
-                score_color = "orange"
-            else:
-                score_color = "red"
-            
-            st.markdown(f"**Score: <span style='color: {score_color}'>{ats_score}%</span>**", unsafe_allow_html=True)
-            
-            # Progress bar
-            st.progress(ats_score / 100)
-            
-            # Keywords analysis
+            st.subheader("🔍 ATS Keywords Analysis")
             col1, col2 = st.columns(2)
             with col1:
-                st.success(f"✅ Found Keywords: {', '.join(ats_analysis['found_keywords'][:5])}")
+                st.success(f"✅ Found Keywords ({len(ats_analysis['found_keywords'])}): {', '.join(ats_analysis['found_keywords'][:8])}")
             with col2:
                 if ats_analysis['missing_keywords']:
-                    st.warning(f"❌ Missing: {', '.join(ats_analysis['missing_keywords'][:5])}")
+                    st.warning(f"❌ Missing Keywords ({len(ats_analysis['missing_keywords'])}): {', '.join(ats_analysis['missing_keywords'][:8])}")
+                else:
+                    st.success("🎉 All target keywords found!")
 
     # Original text display
     with st.expander("📄 Original Extracted Text", expanded=False):
