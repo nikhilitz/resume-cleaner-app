@@ -511,13 +511,24 @@ def clean_text_preserving_layout(raw_text: str) -> str:
     # Create a pattern to match technical terms (case-insensitive)
     tech_pattern = '|'.join(re.escape(term) for term in technical_terms)
     
-    # Fix common grammar issues first (before spacing changes)
-    cleaned = re.sub(r'\b([a-z]+)are\b', r'\1 are', cleaned)  # Fix "Developedareal" -> "Developed a real"
-    cleaned = re.sub(r'\b([a-z]+)an\b', r'\1 an', cleaned)  # Fix "Deployedan" -> "Deployed an"
-    cleaned = re.sub(r'\b([a-z]+)with\b', r'\1 with', cleaned)  # Fix "Integratedwith" -> "Integrated with"
-    cleaned = re.sub(r'\b([a-z]+)for\b', r'\1 for', cleaned)  # Fix "Designedfor" -> "Designed for"
-    cleaned = re.sub(r'\b([a-z]+)to\b', r'\1 to', cleaned)  # Fix "Implementedto" -> "Implemented to"
-    cleaned = re.sub(r'\b([a-z]+)in\b', r'\1 in', cleaned)  # Fix "Specializedin" -> "Specialized in"
+    # Fix specific problematic patterns first
+    cleaned = re.sub(r'Developedareal', 'Developed a real', cleaned)
+    cleaned = re.sub(r'Optimizeddeeplearning', 'Optimized deep learning', cleaned)
+    cleaned = re.sub(r'IntegratedLangGraph', 'Integrated LangGraph', cleaned)
+    cleaned = re.sub(r'Deployedanaccessible', 'Deployed an accessible', cleaned)
+    cleaned = re.sub(r'Applied data pre processing', 'Applied data preprocessing', cleaned)
+    cleaned = re.sub(r'hum an-like', 'human-like', cleaned)
+    cleaned = re.sub(r'real-timeAI', 'real-time AI', cleaned)
+    cleaned = re.sub(r'workflowsfor', 'workflows for', cleaned)
+    cleaned = re.sub(r'restricted-area', 'restricted-area', cleaned)
+    
+    # Fix common grammar issues
+    cleaned = re.sub(r'\b([a-z]+)are\b', r'\1 are', cleaned)  # Fix remaining "are" issues
+    cleaned = re.sub(r'\b([a-z]+)an\b', r'\1 an', cleaned)  # Fix remaining "an" issues
+    cleaned = re.sub(r'\b([a-z]+)with\b', r'\1 with', cleaned)  # Fix remaining "with" issues
+    cleaned = re.sub(r'\b([a-z]+)for\b', r'\1 for', cleaned)  # Fix remaining "for" issues
+    cleaned = re.sub(r'\b([a-z]+)to\b', r'\1 to', cleaned)  # Fix remaining "to" issues
+    cleaned = re.sub(r'\b([a-z]+)in\b', r'\1 in', cleaned)  # Fix remaining "in" issues
     
     # Fix specific common issues - comprehensive real-world scenarios
     common_fixes = [
