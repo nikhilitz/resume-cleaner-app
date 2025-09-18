@@ -522,6 +522,23 @@ def clean_text_preserving_layout(raw_text: str) -> str:
     cleaned = re.sub(r'workflowsfor', 'workflows for', cleaned)
     cleaned = re.sub(r'restricted-area', 'restricted-area', cleaned)
     
+    # Fix additional complex patterns
+    cleaned = re.sub(r'AIsurveillancesystemusingArcFace', 'AI surveillance system using ArcFace', cleaned)
+    cleaned = re.sub(r'deeplearningmodelswithBayesianhyperparametertuning', 'deep learning models with Bayesian hyperparameter tuning', cleaned)
+    cleaned = re.sub(r'face-sizefiltering,andtransferlearning', 'face-size filtering, and transfer learning', cleaned)
+    cleaned = re.sub(r'AIdecision-makingandautomatedalertsinrestricted-area', 'AI decision-making and automated alerts in restricted-area', cleaned)
+    cleaned = re.sub(r'accessibleinterfaceviaStreamlit', 'accessible interface via Streamlit', cleaned)
+    cleaned = re.sub(r'speechsynthesisandmodular', 'speech synthesis and modular', cleaned)
+    cleaned = re.sub(r'DataScience: DataAnalysis\(Pandas,NumPy\)', 'Data Science: Data Analysis (Pandas, NumPy)', cleaned)
+    cleaned = re.sub(r'ExploratoryDataAnalysis\(EDA\)', 'Exploratory Data Analysis (EDA)', cleaned)
+    cleaned = re.sub(r'FeatureEngineering,DataVisualization', 'Feature Engineering, Data Visualization', cleaned)
+    
+    # Fix remaining complex patterns
+    cleaned = re.sub(r'deeplearningmodelswith', 'deep learning models with', cleaned)
+    cleaned = re.sub(r'Bayesianhyperparametertuning', 'Bayesian hyperparameter tuning', cleaned)
+    cleaned = re.sub(r'facialrecognition', 'facial recognition', cleaned)
+    cleaned = re.sub(r'facialrecognition\)andYOLOv8', 'facial recognition) and YOLOv8', cleaned)
+    
     # Fix common grammar issues
     cleaned = re.sub(r'\b([a-z]+)are\b', r'\1 are', cleaned)  # Fix remaining "are" issues
     cleaned = re.sub(r'\b([a-z]+)an\b', r'\1 an', cleaned)  # Fix remaining "an" issues
