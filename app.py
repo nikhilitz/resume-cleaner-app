@@ -385,20 +385,195 @@ def clean_text_preserving_layout(raw_text: str) -> str:
     cleaned = raw_text
     # Remove PDF character IDs like (cid:132)
     cleaned = re.sub(r'\(cid:\d+\)', '', cleaned)
-    # Fix common spacing issues
-    cleaned = re.sub(r'([a-z])([A-Z])', r'\1 \2', cleaned)  # Add space between camelCase
-    cleaned = re.sub(r'([a-z])(\d)', r'\1 \2', cleaned)  # Add space between letter and number
-    cleaned = re.sub(r'(\d)([A-Z])', r'\1 \2', cleaned)  # Add space between number and letter
-    # Fix common grammar issues
+    
+    # Define comprehensive technical terms and proper nouns to preserve
+    technical_terms = [
+        # Programming Languages
+        'Python', 'Java', 'JavaScript', 'TypeScript', 'C++', 'C#', 'Go', 'Rust', 'Swift', 'Kotlin',
+        'PHP', 'Ruby', 'Scala', 'Perl', 'R', 'MATLAB', 'Julia', 'Dart', 'Lua', 'Haskell',
+        
+        # Web Technologies
+        'HTML', 'CSS', 'React', 'Vue.js', 'Angular', 'Node.js', 'Express.js', 'Django', 'Flask',
+        'FastAPI', 'Spring', 'Laravel', 'Rails', 'ASP.NET', 'jQuery', 'Bootstrap', 'Tailwind',
+        'Sass', 'Less', 'Webpack', 'Vite', 'Next.js', 'Nuxt.js', 'Gatsby', 'Svelte',
+        
+        # Databases
+        'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Elasticsearch', 'Cassandra', 'DynamoDB',
+        'SQLite', 'Oracle', 'SQL Server', 'MariaDB', 'Neo4j', 'InfluxDB', 'CouchDB',
+        
+        # Cloud Platforms
+        'AWS', 'Azure', 'GCP', 'Google Cloud', 'Heroku', 'DigitalOcean', 'Linode', 'Vultr',
+        'Cloudflare', 'Netlify', 'Vercel', 'Firebase', 'Supabase', 'PlanetScale',
+        
+        # DevOps & Infrastructure
+        'Docker', 'Kubernetes', 'Jenkins', 'GitLab CI', 'GitHub Actions', 'CircleCI', 'Travis CI',
+        'Terraform', 'Ansible', 'Chef', 'Puppet', 'Vagrant', 'Prometheus', 'Grafana',
+        'ELK Stack', 'Splunk', 'Datadog', 'New Relic', 'Sentry',
+        
+        # Machine Learning & AI
+        'PyTorch', 'TensorFlow', 'Keras', 'Scikit-learn', 'NumPy', 'Pandas', 'Matplotlib',
+        'Seaborn', 'Plotly', 'Jupyter', 'Colab', 'Hugging Face', 'OpenAI', 'LangChain',
+        'YOLOv8', 'YOLOv5', 'OpenCV', 'PIL', 'NLTK', 'spaCy', 'Gensim', 'XGBoost',
+        'LightGBM', 'CatBoost', 'Apache Spark', 'MLflow', 'Weights & Biases', 'Neptune',
+        
+        # Mobile Development
+        'React Native', 'Flutter', 'Ionic', 'Xamarin', 'Cordova', 'PhoneGap', 'Expo',
+        'Android Studio', 'Xcode', 'App Store', 'Google Play', 'TestFlight',
+        
+        # Version Control & Collaboration
+        'Git', 'GitHub', 'GitLab', 'Bitbucket', 'SVN', 'Mercurial', 'Perforce',
+        'Slack', 'Discord', 'Microsoft Teams', 'Zoom', 'Jira', 'Confluence', 'Notion',
+        
+        # IDEs & Editors
+        'VS Code', 'IntelliJ IDEA', 'PyCharm', 'WebStorm', 'Sublime Text', 'Atom', 'Vim',
+        'Emacs', 'Eclipse', 'NetBeans', 'Xcode', 'Android Studio', 'RStudio',
+        
+        # Testing & Quality
+        'Jest', 'Mocha', 'Chai', 'Cypress', 'Selenium', 'Playwright', 'Pytest', 'JUnit',
+        'TestNG', 'Cucumber', 'Postman', 'Insomnia', 'Swagger', 'OpenAPI',
+        
+        # Analytics & Monitoring
+        'Google Analytics', 'Mixpanel', 'Amplitude', 'Hotjar', 'FullStory', 'LogRocket',
+        'DataDog', 'New Relic', 'Sentry', 'Bugsnag', 'Rollbar', 'Honeycomb',
+        
+        # Design & UI/UX
+        'Figma', 'Sketch', 'Adobe XD', 'InVision', 'Framer', 'Principle', 'Zeplin',
+        'Canva', 'Photoshop', 'Illustrator', 'After Effects', 'Blender', 'Unity',
+        
+        # Business & Project Management
+        'Agile', 'Scrum', 'Kanban', 'SAFe', 'Lean', 'Six Sigma', 'PMP', 'PRINCE2',
+        'Trello', 'Asana', 'Monday.com', 'Basecamp', 'Smartsheet', 'Airtable',
+        
+        # Security
+        'OAuth', 'JWT', 'SSL', 'TLS', 'HTTPS', 'VPN', 'Firewall', 'Penetration Testing',
+        'OWASP', 'Burp Suite', 'Nmap', 'Wireshark', 'Metasploit', 'Kali Linux',
+        
+        # Blockchain & Crypto
+        'Bitcoin', 'Ethereum', 'Solidity', 'Web3', 'MetaMask', 'Truffle', 'Hardhat',
+        'IPFS', 'Polygon', 'Binance Smart Chain', 'Cardano', 'Polkadot',
+        
+        # IoT & Hardware
+        'Arduino', 'Raspberry Pi', 'ESP32', 'MQTT', 'CoAP', 'LoRaWAN', 'Zigbee',
+        'Bluetooth', 'WiFi', 'NFC', 'RFID', 'GPIO', 'I2C', 'SPI', 'UART',
+        
+        # Gaming
+        'Unity', 'Unreal Engine', 'Godot', 'Cocos2d', 'Phaser', 'Three.js', 'WebGL',
+        'OpenGL', 'DirectX', 'Vulkan', 'Steam', 'Epic Games', 'PlayStation', 'Xbox',
+        
+        # Common Acronyms & Terms
+        'API', 'REST', 'GraphQL', 'gRPC', 'WebSocket', 'HTTP', 'HTTPS', 'TCP', 'UDP',
+        'JSON', 'XML', 'YAML', 'CSV', 'PDF', 'PNG', 'JPEG', 'SVG', 'MP4', 'AVI',
+        'CI/CD', 'DevOps', 'SRE', 'MLOps', 'DataOps', 'GitOps', 'Infrastructure as Code',
+        'Microservices', 'Serverless', 'Edge Computing', 'Cloud Native', 'Containerization',
+        'Orchestration', 'Service Mesh', 'API Gateway', 'Load Balancer', 'CDN',
+        'Machine Learning', 'Deep Learning', 'Artificial Intelligence', 'Computer Vision',
+        'Natural Language Processing', 'Reinforcement Learning', 'Transfer Learning',
+        'Data Science', 'Big Data', 'Data Engineering', 'ETL', 'ELT', 'Data Pipeline',
+        'Data Warehouse', 'Data Lake', 'Data Mart', 'OLAP', 'OLTP', 'NoSQL', 'NewSQL',
+        'CAP Theorem', 'ACID', 'BASE', 'Event Sourcing', 'CQRS', 'Domain Driven Design',
+        'Test Driven Development', 'Behavior Driven Development', 'Pair Programming',
+        'Code Review', 'Refactoring', 'Design Patterns', 'SOLID Principles', 'Clean Code',
+        'Architecture Patterns', 'MVC', 'MVP', 'MVVM', 'Repository Pattern', 'Factory Pattern',
+        'Observer Pattern', 'Singleton Pattern', 'Strategy Pattern', 'Command Pattern',
+        'Responsive Design', 'Progressive Web App', 'Single Page Application',
+        'Server Side Rendering', 'Static Site Generation', 'Jamstack', 'Headless CMS',
+        'Content Management System', 'Customer Relationship Management', 'Enterprise Resource Planning',
+        'Business Intelligence', 'Data Visualization', 'Dashboard', 'Reporting', 'Analytics',
+        'Key Performance Indicators', 'Return on Investment', 'Total Cost of Ownership',
+        'Service Level Agreement', 'Disaster Recovery', 'Business Continuity', 'Risk Management',
+        'Compliance', 'GDPR', 'HIPAA', 'SOX', 'PCI DSS', 'ISO 27001', 'SOC 2',
+        'Accessibility', 'WCAG', 'ARIA', 'Screen Reader', 'Keyboard Navigation',
+        'Internationalization', 'Localization', 'Multi-tenancy', 'Scalability', 'Performance',
+        'Optimization', 'Caching', 'CDN', 'Load Testing', 'Stress Testing', 'A/B Testing',
+        'User Experience', 'User Interface', 'Human Computer Interaction', 'Usability Testing',
+        'User Research', 'Personas', 'User Stories', 'Acceptance Criteria', 'Definition of Done',
+        'Sprint Planning', 'Daily Standup', 'Sprint Review', 'Retrospective', 'Backlog Grooming',
+        'Story Points', 'Velocity', 'Burndown Chart', 'Burnup Chart', 'Epic', 'Feature',
+        'Technical Debt', 'Code Coverage', 'Static Analysis', 'Dynamic Analysis', 'Profiling',
+        'Debugging', 'Logging', 'Monitoring', 'Alerting', 'Incident Response', 'Post-mortem',
+        'Root Cause Analysis', 'Mean Time to Recovery', 'Mean Time Between Failures',
+        'High Availability', 'Fault Tolerance', 'Redundancy', 'Backup', 'Restore',
+        'Version Control', 'Branching Strategy', 'Merge Conflict', 'Pull Request', 'Code Review',
+        'Continuous Integration', 'Continuous Deployment', 'Blue Green Deployment', 'Canary Release',
+        'Feature Flags', 'Dark Launch', 'Rollback', 'Hotfix', 'Release Management',
+        'Configuration Management', 'Environment Variables', 'Secrets Management', 'Vault',
+        'Identity and Access Management', 'Single Sign On', 'Multi Factor Authentication',
+        'Role Based Access Control', 'Principle of Least Privilege', 'Zero Trust Security',
+        'Network Security', 'Application Security', 'Infrastructure Security', 'Data Security',
+        'Encryption', 'Hashing', 'Digital Signature', 'Certificate Authority', 'Public Key Infrastructure',
+        'Vulnerability Assessment', 'Penetration Testing', 'Security Audit', 'Compliance Check',
+        'Threat Modeling', 'Risk Assessment', 'Security Incident', 'Breach Response',
+        'Forensics', 'Malware Analysis', 'Reverse Engineering', 'Exploit Development',
+        'Bug Bounty', 'Responsible Disclosure', 'CVE', 'CVSS', 'NIST', 'ISO 27001',
+        'SOC 2', 'PCI DSS', 'HIPAA', 'GDPR', 'CCPA', 'LGPD', 'PIPEDA', 'PDPA'
+    ]
+    
+    # Create a pattern to match technical terms (case-insensitive)
+    tech_pattern = '|'.join(re.escape(term) for term in technical_terms)
+    
+    # Fix common grammar issues first (before spacing changes)
     cleaned = re.sub(r'\b([a-z]+)are\b', r'\1 are', cleaned)  # Fix "Developedareal" -> "Developed a real"
     cleaned = re.sub(r'\b([a-z]+)an\b', r'\1 an', cleaned)  # Fix "Deployedan" -> "Deployed an"
     cleaned = re.sub(r'\b([a-z]+)with\b', r'\1 with', cleaned)  # Fix "Integratedwith" -> "Integrated with"
     cleaned = re.sub(r'\b([a-z]+)for\b', r'\1 for', cleaned)  # Fix "Designedfor" -> "Designed for"
     cleaned = re.sub(r'\b([a-z]+)to\b', r'\1 to', cleaned)  # Fix "Implementedto" -> "Implemented to"
     cleaned = re.sub(r'\b([a-z]+)in\b', r'\1 in', cleaned)  # Fix "Specializedin" -> "Specialized in"
+    
+    # Fix specific common issues - comprehensive real-world scenarios
+    common_fixes = [
+        # Time and temporal terms
+        (r'\b([a-z]+)time\b', r'\1 time'),  # real-time, realtime -> real time
+        (r'\b([a-z]+)based\b', r'\1 based'),  # learning-based, data-based -> learning based, data based
+        (r'\b([a-z]+)driven\b', r'\1 driven'),  # data-driven, test-driven -> data driven, test driven
+        (r'\b([a-z]+)oriented\b', r'\1 oriented'),  # object-oriented, service-oriented -> object oriented, service oriented
+        
+        # Technical compound words
+        (r'\b([a-z]+)learning\b', r'\1 learning'),  # deeplearning, machinelearning -> deep learning, machine learning
+        (r'\b([a-z]+)intelligence\b', r'\1 intelligence'),  # artificialintelligence -> artificial intelligence
+        (r'\b([a-z]+)processing\b', r'\1 processing'),  # dataprocessing, imageprocessing -> data processing, image processing
+        (r'\b([a-z]+)analysis\b', r'\1 analysis'),  # dataanalysis, businessanalysis -> data analysis, business analysis
+        (r'\b([a-z]+)engineering\b', r'\1 engineering'),  # softwareengineering, dataengineering -> software engineering, data engineering
+        (r'\b([a-z]+)development\b', r'\1 development'),  # softwaredevelopment, webdevelopment -> software development, web development
+        (r'\b([a-z]+)management\b', r'\1 management'),  # projectmanagement, datamanagement -> project management, data management
+        (r'\b([a-z]+)optimization\b', r'\1 optimization'),  # performanceoptimization, codeoptimization -> performance optimization, code optimization
+        
+        # Action and process terms
+        (r'\b([a-z]+)making\b', r'\1 making'),  # decision-making, policymaking -> decision making, policy making
+        (r'\b([a-z]+)testing\b', r'\1 testing'),  # penetrationtesting, usertesting -> penetration testing, user testing
+        (r'\b([a-z]+)monitoring\b', r'\1 monitoring'),  # systemmonitoring, performancemonitoring -> system monitoring, performance monitoring
+        (r'\b([a-z]+)support\b', r'\1 support'),  # customersupport, technicalsupport -> customer support, technical support
+        (r'\b([a-z]+)service\b', r'\1 service'),  # customerservice, webservice -> customer service, web service
+        
+        # Data and analytics terms
+        (r'\b([a-z]+)visualization\b', r'\1 visualization'),  # datavisualization, informationvisualization -> data visualization, information visualization
+        (r'\b([a-z]+)security\b', r'\1 security'),  # informationsecurity, networksecurity -> information security, network security
+        (r'\b([a-z]+)experience\b', r'\1 experience'),  # userexperience, customerexperience -> user experience, customer experience
+        (r'\b([a-z]+)interface\b', r'\1 interface'),  # userinterface, applicationinterface -> user interface, application interface
+        
+        # Performance terms
+        (r'\b([a-z]+)performance\b', r'\1 performance'),  # systemperformance, applicationperformance -> system performance, application performance
+        (r'\b([a-z]+)scalability\b', r'\1 scalability'),  # systemscalability, applicationscalability -> system scalability, application scalability
+        
+        # Specific technical fixes
+        (r'\b([a-z]+)real\b', r'\1 real'),  # Developedareal -> Developed a real
+        (r'\b([a-z]+)synthesis\b', r'\1 synthesis'),  # speechsynthesis -> speech synthesis
+        (r'\b([a-z]+)translation\b', r'\1 translation'),  # multilingualtranslation -> multilingual translation
+        (r'\b([a-z]+)correlation\b', r'\1 correlation'),  # timestamp-based -> timestamp based
+        (r'\b([a-z]+)detection\b', r'\1 detection'),  # objectdetection -> object detection
+        (r'\b([a-z]+)streaming\b', r'\1 streaming'),  # videostreaming -> video streaming
+        (r'\b([a-z]+)parsing\b', r'\1 parsing'),  # queryparsing -> query parsing
+        (r'\b([a-z]+)methods\b', r'\1 methods'),  # ensemblemethods -> ensemble methods
+        (r'\b([a-z]+)tuning\b', r'\1 tuning'),  # hyperparametertuning -> hyperparameter tuning
+        (r'\b([a-z]+)algorithms\b', r'\1 algorithms'),  # dataalgorithms -> data algorithms
+    ]
+    
+    # Apply all the common fixes
+    for pattern, replacement in common_fixes:
+        cleaned = re.sub(pattern, replacement, cleaned)
+    
     # Fix common punctuation issues
-    cleaned = re.sub(r'([a-z])([A-Z][a-z])', r'\1. \2', cleaned)  # Add period before new sentences
     cleaned = re.sub(r'([.!?])([A-Z])', r'\1 \2', cleaned)  # Ensure space after punctuation
+    
     # Clean up multiple spaces
     cleaned = re.sub(r' +', ' ', cleaned)
     # Clean up multiple newlines
